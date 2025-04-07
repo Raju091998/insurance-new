@@ -100,7 +100,7 @@ with tab2:
             file_name = doc["filename"]
             predicted_data = pd.DataFrame(doc["predicted_csv"])
 
-            st.markdown(f"### Predictions for '{file_name}'")
+            st.markdown(f"Predictions for '{file_name}'")
 
             predicted_data = predicted_data.loc[:, ~predicted_data.columns.str.contains('^Unnamed|_id|^id$', case=False)]
 
