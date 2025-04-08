@@ -1,0 +1,35 @@
+name: ML Insurance deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to EC2 via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.AWS_HOST }}
+        username: ${{ secrets.AWS_USER }}
+        key: ${{ secrets.AWS_KEY }}
+        script: |
+          script: |
+            cd /home/ubuntu/ml-insurance || {
+              cd /home/ubuntu
+              git clone git@github.com:Raju091998/insurance-new.git
+            }
+          
+            cd /home/ubuntu/ml-insurance
+          
+            git fetch --all
+            git reset --hard origin/main
+          
+            pkill streamlit || true
+            nohup streamlit run app.py --server.port 8501 --server.enableCORS false > streamlit.log 2>&1 &
