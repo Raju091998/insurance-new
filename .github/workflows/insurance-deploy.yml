@@ -21,12 +21,12 @@ jobs:
         key: ${{ secrets.AWS_KEY }}
         script: |
           script: |
-            cd /home/ubuntu/ml-insurance || {
+            cd /home/ubuntu/insurance-new || {
               cd /home/ubuntu
               git clone git@github.com:Raju091998/insurance-new.git
             }
           
-            cd /home/ubuntu/ml-insurance
+            cd /home/ubuntu/insurance-new
           
             git fetch --all
             git reset --hard origin/main
