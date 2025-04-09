@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import os
@@ -22,7 +23,24 @@ st.title("Insurance Prediction")
 csv_files = [f for f in os.listdir(CSV_FOLDER) if f.endswith(".csv")]
 predicted_files = [f for f in os.listdir(PREDICTED_FOLDER) if f.endswith(".csv")]
 
-unpredicted_files = [f for f in csv_files if f not in predicted_files]
+for predicted_file in predicted_files:
+    original_csv_path = os.path.join(CSV_FOLDER, predicted_file)
+    predicted_file_path = os.path.join(PREDICTED_FOLDER, predicted_file)
+
+    if not os.path.exists(original_csv_path):
+        os.remove(predicted_file_path)
+        st.warning(f"Removed orphan prediction: '{predicted_file}'")
+
+predicted_files = [f for f in os.listdir(PREDICTED_FOLDER) if f.endswith(".csv")]
+
+unpredicted_files = []
+for f in csv_files:
+    csv_path = os.path.join(CSV_FOLDER, f)
+    predicted_path = os.path.join(PREDICTED_FOLDER, f)
+
+    if not os.path.exists(predicted_path) or os.path.getmtime(csv_path) > os.path.getmtime(predicted_path):
+        unpredicted_files.append(f)
+
 if unpredicted_files:
     if st.button("PredictAll"):
         for file in unpredicted_files:
@@ -41,11 +59,15 @@ if unpredicted_files:
 
                 df.to_csv(predicted_path, index=False)
                 st.success(f"Predictions saved for '{file}'")
+
             except Exception as e:
                 st.error(f"Error processing '{file}': {e}")
-        st.rerun() 
+
+        st.rerun()
 
 st.subheader("Predicted CSV Files")
+predicted_files = [f for f in os.listdir(PREDICTED_FOLDER) if f.endswith(".csv")]
+
 if not predicted_files:
     st.info("No predicted files found.")
 else:
