@@ -14,24 +14,21 @@ required_cols = [
 CSV_FOLDER = "csv_files"
 PREDICTED_FOLDER = "predicted_files"
 
+os.makedirs(CSV_FOLDER, exist_ok=True)
 os.makedirs(PREDICTED_FOLDER, exist_ok=True)
 
-st.title("CSV Prediction Dashboard")
+st.title("Insurance Prediction Dashboard")
 
-st.header("Predict from All CSV Files in Folder")
+csv_files = [f for f in os.listdir(CSV_FOLDER) if f.endswith(".csv")]
+predicted_files = [f for f in os.listdir(PREDICTED_FOLDER) if f.endswith(".csv")]
 
-if st.button("PredictAll"):
-    csv_files = [f for f in os.listdir(CSV_FOLDER) if f.endswith(".csv")]
-    if not csv_files:
-        st.warning("No CSV files found in the 'csv_files/' folder.")
-    else:
-        for file in csv_files:
+unpredicted_files = [f for f in csv_files if f not in predicted_files]
+
+if unpredicted_files:
+    if st.button("PredictAll"):
+        for file in unpredicted_files:
             file_path = os.path.join(CSV_FOLDER, file)
             predicted_path = os.path.join(PREDICTED_FOLDER, file)
-
-            if os.path.exists(predicted_path):
-                st.info(f"Prediction already exists for '{file}'")
-                continue
 
             try:
                 df = pd.read_csv(file_path)
@@ -47,10 +44,9 @@ if st.button("PredictAll"):
                 st.success(f"Predictions saved for '{file}'")
             except Exception as e:
                 st.error(f"Error processing '{file}': {e}")
+        st.rerun() 
 
 st.subheader("Predicted CSV Files")
-predicted_files = [f for f in os.listdir(PREDICTED_FOLDER) if f.endswith(".csv")]
-
 if not predicted_files:
     st.info("No predicted files found.")
 else:
