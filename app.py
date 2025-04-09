@@ -21,14 +21,19 @@ required_cols = [
     "region_northwest", "region_southeast", "region_southwest"
 ]
 
-# Session state flags
+# Session state setup
 if "predicted_done" not in st.session_state:
     st.session_state["predicted_done"] = False
 if "uploaded" not in st.session_state:
     st.session_state["uploaded"] = False
+if "local_csvs" not in st.session_state:
+    st.session_state["local_csvs"] = {}
+if "local_predicted" not in st.session_state:
+    st.session_state["local_predicted"] = {}
 
-tab1, tab2 = st.tabs(["Upload CSV", "Predictions"])
+tab1, tab2, tab3 = st.tabs(["Upload CSV", "MongoDB Predictions", "Local Predictions"])
 
+# ----------------- Tab 1: Upload ---------------------
 with tab1:
     st.header("Upload CSV File")
     uploaded_file = st.file_uploader("Choose a CSV file", type="csv", key="file_uploader")
@@ -42,6 +47,7 @@ with tab1:
                 if not all(col in df.columns for col in required_cols):
                     st.error("Invalid CSV format. Missing required columns.")
                 else:
+                    # Save to MongoDB
                     existing = collection.find_one({"filename": file_name})
                     if existing:
                         collection.delete_one({"filename": file_name})
@@ -52,17 +58,21 @@ with tab1:
                         "predicted_csv": None
                     })
 
+                    # Save to memory for local prediction
+                    st.session_state.local_csvs[file_name] = df
+
                     st.success(f"File '{file_name}' uploaded successfully.")
                     st.session_state.uploaded = True
                     st.rerun()
             except Exception as e:
                 st.error(f"Upload failed: {e}")
 
-if "uploaded" in st.session_state and not uploaded_file:
-    st.session_state.uploaded = False
+    if "uploaded" in st.session_state and not uploaded_file:
+        st.session_state.uploaded = False
 
+# ----------------- Tab 2: MongoDB Predictions ---------------------
 with tab2:
-    st.header("Predicted CSV files")
+    st.header("Predicted CSV files from MongoDB")
     all_docs = list(collection.find())
     predicted_docs = [doc for doc in all_docs if doc.get("predicted_csv")]
     unpredicted_docs = [doc for doc in all_docs if not doc.get("predicted_csv")]
@@ -71,7 +81,7 @@ with tab2:
         st.info("No files found in MongoDB.")
     else:
         if unpredicted_docs:
-            if st.button("PredictAll"):
+            if st.button("PredictAll (MongoDB)"):
                 with st.spinner("Predicting all unpredicted files..."):
                     for doc in unpredicted_docs:
                         file_name = doc["filename"]
@@ -99,11 +109,45 @@ with tab2:
             file_name = doc["filename"]
             predicted_data = pd.DataFrame(doc["predicted_csv"])
 
-            st.markdown(f"Predictions for '{file_name}'")
+            st.markdown(f"### Predictions for '{file_name}'")
 
             predicted_data = predicted_data.loc[:, ~predicted_data.columns.str.contains('^Unnamed|_id|^id$', case=False)]
-
             display_cols = required_cols + ["prediction"]
             display_cols = [col for col in display_cols if col in predicted_data.columns]
 
             st.dataframe(predicted_data[display_cols])
+
+with tab3:
+    st.header("Local In-Memory CSV Predictions")
+
+    local_files = list(st.session_state.local_csvs.keys())
+    unpredicted_local_files = [f for f in local_files if f not in st.session_state.local_predicted]
+
+    if not local_files:
+        st.info("No in-memory files found.")
+    else:
+        if unpredicted_local_files:
+            if st.button("PredictAll (Local Files)"):
+                with st.spinner("Predicting files..."):
+                    for file_name in unpredicted_local_files:
+                        df = st.session_state.local_csvs[file_name]
+
+                        if not all(col in df.columns for col in required_cols):
+                            st.warning(f"Skipping '{file_name}': Missing required columns.")
+                            continue
+
+                        try:
+                            input_data = df[required_cols].values
+                            predictions = model.predict(input_data)
+                            df["prediction"] = predictions.round(2)
+                            st.session_state.local_predicted[file_name] = df
+                            st.success(f"Predicted: {file_name}")
+                        except Exception as e:
+                            st.error(f"Error in '{file_name}': {e}")
+                st.rerun()
+
+        for file_name, df in st.session_state.local_predicted.items():
+            st.subheader(f"Predictions for '{file_name}'")
+            display_cols = required_cols + ["prediction"]
+            display_cols = [col for col in display_cols if col in df.columns]
+            st.dataframe(df[display_cols])
