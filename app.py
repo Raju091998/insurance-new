@@ -17,7 +17,7 @@ PREDICTED_FOLDER = "predicted_files"
 os.makedirs(CSV_FOLDER, exist_ok=True)
 os.makedirs(PREDICTED_FOLDER, exist_ok=True)
 
-st.title("Insurance Prediction Dashboard")
+st.title("Insurance Prediction")
 
 csv_files = [f for f in os.listdir(CSV_FOLDER) if f.endswith(".csv")]
 predicted_files = [f for f in os.listdir(PREDICTED_FOLDER) if f.endswith(".csv")]
