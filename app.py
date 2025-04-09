@@ -62,6 +62,7 @@ if "uploaded" in st.session_state and not uploaded_file:
     st.session_state.uploaded = False
 
 with tab2:
+    st.header("Predicted CSV Files Info")
     all_docs = list(collection.find())
     predicted_docs = [doc for doc in all_docs if doc.get("predicted_csv")]
     unpredicted_docs = [doc for doc in all_docs if not doc.get("predicted_csv")]
