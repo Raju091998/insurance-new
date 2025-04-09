@@ -23,7 +23,6 @@ csv_files = [f for f in os.listdir(CSV_FOLDER) if f.endswith(".csv")]
 predicted_files = [f for f in os.listdir(PREDICTED_FOLDER) if f.endswith(".csv")]
 
 unpredicted_files = [f for f in csv_files if f not in predicted_files]
-
 if unpredicted_files:
     if st.button("PredictAll"):
         for file in unpredicted_files:
