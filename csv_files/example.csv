@@ -5,3 +5,4 @@ id,age,bmi,children,sex_male,smoker_yes,region_northwest,region_southeast,region
 4,30,32,1,1,0,0,0,1
 5,36,40,2,1,0,0,0,1
 6,32,38,1,1,0,1,0,1
+7,29,32,2,1,1,0,1,0
