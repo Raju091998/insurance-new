@@ -4,7 +4,6 @@ import pandas as pd
 import os
 import joblib
 
-
 # Load model
 model = joblib.load("model.pkl")
 
